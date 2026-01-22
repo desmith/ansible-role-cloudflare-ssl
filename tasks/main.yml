@@ -1,0 +1,72 @@
+---
+- name: Install OpenSSL
+  dnf:
+    name: openssl
+    state: present
+
+- name: Create SSL directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /etc/ssl/cloudflare
+    - /etc/ssl/private
+    - /etc/ssl/certs
+
+- name: Retrieve Cloudflare Origin CA certificate from AWS Secrets Manager
+  amazon.aws.secretsmanager_secret:
+    name: "{{ cloudflare_origin_cert_secret_name }}"
+    region: us-east-1
+  register: cloudflare_origin_cert_secret
+
+- name: Save Cloudflare Origin CA certificate
+  copy:
+    content: "{{ cloudflare_origin_cert_secret.secret.SecretString }}"
+    dest: /etc/ssl/cloudflare/origin-pull-ca.pem
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart nginx
+
+- name: Generate private key for origin server
+  openssl_privatekey:
+    path: /etc/ssl/private/{{ ssl_hostname }}.key
+    size: 2048
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Generate certificate signing request
+  openssl_csr:
+    path: /etc/ssl/private/{{ ssl_hostname }}.csr
+    privatekey_path: /etc/ssl/private/{{ ssl_hostname }}.key
+    common_name: "{{ ssl_hostname }}"
+    subject_alt_name:
+      - "DNS:{{ ssl_hostname }}"
+      - "DNS:www.{{ ssl_hostname }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Generate self-signed certificate for origin server
+  openssl_certificate:
+    path: /etc/ssl/certs/{{ ssl_hostname }}.crt
+    privatekey_path: /etc/ssl/private/{{ ssl_hostname }}.key
+    csr_path: /etc/ssl/private/{{ ssl_hostname }}.csr
+    provider: selfsigned
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart nginx
+
+- name: Create DH parameters (this may take a while)
+  openssl_dhparam:
+    path: /etc/ssl/certs/dhparam.pem
+    size: 2048
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart nginx

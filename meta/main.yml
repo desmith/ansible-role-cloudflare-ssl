@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: DevOps Team
+  description: SSL/TLS configuration for Cloudflare Authenticated Origin Pulls
+  company: ISKCON Environment
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Amazon Linux
+      versions:
+        - 2023
+  galaxy_tags:
+    - ssl
+    - cloudflare
+    - security
+
+dependencies: []

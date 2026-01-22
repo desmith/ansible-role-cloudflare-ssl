@@ -1,0 +1,36 @@
+---
+# SSL Configuration
+ssl_hostname: "{{ inventory_hostname }}"
+ssl_key_size: 2048
+ssl_dhparam_size: 2048
+ssl_certificate_validity_days: 365
+
+# Cloudflare AOP Configuration
+ssl_cloudflare_aop_enabled: true
+ssl_cloudflare_cert_source: "aws_secrets"  # aws_secrets, file, url, content
+ssl_cloudflare_cert_secret_name: ""
+ssl_cloudflare_cert_content: ""
+ssl_cloudflare_cert_file: ""
+ssl_cloudflare_cert_url: "https://developers.cloudflare.com/ssl/static/authenticated_origin_pull_ca.pem"
+
+# AWS Configuration
+ssl_aws_region: "us-east-1"
+
+# System Configuration
+ssl_package_manager: "{{ ansible_pkg_mgr }}"  # Auto-detect: dnf, yum, apt, etc.
+ssl_openssl_package: "openssl"
+
+# Web Server Integration
+ssl_web_server: "nginx"  # nginx, apache, etc.
+ssl_restart_web_server: true
+
+# Certificate Subject Alternative Names
+ssl_subject_alt_names:
+  - "DNS:{{ ssl_hostname }}"
+  - "DNS:www.{{ ssl_hostname }}"
+
+# Directory Configuration
+ssl_base_dir: "/etc/ssl"
+ssl_private_dir: "{{ ssl_base_dir }}/private"
+ssl_certs_dir: "{{ ssl_base_dir }}/certs"
+ssl_cloudflare_dir: "{{ ssl_base_dir }}/cloudflare"
